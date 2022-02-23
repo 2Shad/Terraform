@@ -83,7 +83,15 @@ resource "aws_security_group" "shadman_tf_sg" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = ["147.12.250.227/32"]
+    cidr_blocks      = ["147.12.250.227/32", "34.241.78.77/32"]
+  }
+
+  ingress {
+    description      = "TLS from VPC"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   egress {
