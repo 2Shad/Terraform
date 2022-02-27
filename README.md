@@ -45,75 +45,93 @@ resource "aws_key_pair" "deployer" {
 }
 ```
 
-### Terraform script to create an EC2 instance, VPC, subnet, security group, Internet gateway, route table and the appropriate accociation.
+## Terraform script to create an EC2 instance, VPC, subnet, security group, Internet gateway, route table and the appropriate accociation.
 
+### EC2 deployment
+
+#### Basic EC2 deployment
 ```
-resource "aws_instance" "shadman_tf_app" {
+resource "aws_instance" "instance_name" {
 
-    ami = var.app_ami
+    ami = "ami_name"
 
-    instance_type = var.instantance_type
+    instance_type = "t2.micro"
 
-    key_name= var.key_name
-
-    associate_public_ip_address = true
-
-    vpc_security_group_ids = [aws_security_group.shadman_tf_sg.id]
-
-    subnet_id = aws_subnet.shadman_tf_subnet.id
+    key_name= "key_name"
 
     connection {
       type        = "ssh"
       host        = self.public_ip
       user        = "ubuntu"
-      private_key = file("/config/.ssh/aws_tf")
+      private_key = file("/config/.ssh/key_name")
       timeout     = "4m"
     }
 
-    # Name of the instance
-    tags = {
-        Name = var.tag_name
-    }
 }
+```
 
 
+#### Additional Arguments
+- To enable public IP on instance `associate_public_ip_address = true`.
+- Assign security Group `vpc_security_group_ids = ["security_group_id"]`.  (or `aws_security_group.security_group_name.id`)
+- Assign subnet `subnet_id = "subnet_id"`.  (or `aws_subnet.subnet_name.id`)
+- Tags 
+```
+    tags = {
+        Name = "name"
+    }
+```
+
+#### Deploy a new ssh key to AWS
+```
 resource "aws_key_pair" "deployer" {
-  key_name   = "aws_tf"
+  key_name   = "key_name"
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+C8B1ZgjSWqGtcaVwsa7Bo720MQR6XCCbMqCA9DMeJPbDz4eEqRRsdS3v8/CXlurWPZSjhe7nOigLzuq2xLqpApfTbZrCLbHmGw8I7iZnrpfho7i9KNOZG/qIKymLMC5Y+zLNDGzQBK8RYeeceE1uf0jN0YzDxoeWXYkyddlcEvvjI+oPTpmw2F/4RXwqIVr3BVu0igo7ZI99NggWzgVswH2ndog+iihXsLOMX2/5tWrVNU4GUlknmEAdehtOmKf5tN8w/SbHxAEbaEnayrqncbqNs6qmhr1sNafHBZVuVWfLaC8AUwLrlRSDhnT7G9M/2TFfFY9NZLaRf5Ig5OqH abc@0f0541c92239"
 }
+```
 
+### Create an AWS VPC using terraform
 
-resource "aws_vpc" "shadman_tf_vpc" {
+#### VPC
+
+```
+resource "aws_vpc" "vpc_name" {
     cidr_block = "10.0.0.0/16"
     instance_tenancy = "default"
     
     tags = {
-        Name = "eng103a_shadman_tf_vpc"
+        Name = "name"
     }
 }
+```
 
+#### Subnet
 
-resource "aws_subnet" "shadman_tf_subnet" {
-  vpc_id     = aws_vpc.shadman_tf_vpc.id
+```
+resource "aws_subnet" "subnet_name" {
+  vpc_id     = aws_vpc.vpc_name.id
   cidr_block = "10.0.1.0/24"
 
   tags = {
-    Name = "eng103a_shadman_tf_subnet"
+    Name = "name"
   }
 }
+```
 
+#### Security Group
 
-resource "aws_security_group" "shadman_tf_sg" {
+```
+resource "aws_security_group" "security_group_name" {
   name        = "ssh"
   description = "Allow SSH inbound traffic"
-  vpc_id      = aws_vpc.shadman_tf_vpc.id
+  vpc_id      = aws_vpc.vpc_name.id
 
   ingress {
     description      = "TLS from VPC"
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = ["147.12.250.227/32", "34.241.78.77/32"]
+    cidr_blocks      = ["1.2.3.4/32", "34.241.78.77/32"]
   }
 
   ingress {
@@ -133,36 +151,163 @@ resource "aws_security_group" "shadman_tf_sg" {
   }
 
   tags = {
-    Name = "eng103a_shadman_tf_sg"
+    Name = "name"
   }
 }
+```
 
+#### Internet Gateway
 
-resource "aws_internet_gateway" "shadman_tf_vpc_ig" {
-  vpc_id = aws_vpc.shadman_tf_vpc.id
+```
+resource "aws_internet_gateway" "internet_gateway_name" {
+  vpc_id = aws_vpc.vpc_name.id
 
   tags = {
-    Name = "eng103a_shadman_tf_ig"
+    Name = "name"
   }
 }
+```
 
+#### Route Table
 
-resource "aws_route_table" "shadman_tf_vpc_rt" {
-    vpc_id = aws_vpc.shadman_tf_vpc.id
+```
+resource "aws_route_table" "route_table_name" {
+    vpc_id = aws_vpc.vpc_name.id
 
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = aws_internet_gateway.shadman_tf_vpc_ig.id
+        gateway_id = aws_internet_gateway.internet_gateway_name.id
     }
 
     tags = {
-        Name = "eng103a_shadman_tf_rt"
+        Name = "name"
     }
 }
+```
 
+#### Associating 
 
-resource "aws_route_table_association" "shadman_tf_rt_association" {
-    subnet_id = aws_subnet.shadman_tf_subnet.id
-    route_table_id = aws_route_table.shadman_tf_vpc_rt.id
+```
+resource "aws_route_table_association" "association_name" {
+    subnet_id = aws_subnet.subnet_name.id
+    route_table_id = aws_route_table.route_table_name.id
+}
+```
+
+## Creating Auto-Scaling group with Terraform
+
+Create at least 2 subnets in different avaliability zones using: 
+```
+  availability_zone = "eu-west-1a"
+```
+
+Additionally you might want to add a public IP to the instances, by adding `map_public_ip_on_launch = "true"` argument in the subnet resources.
+
+### Create a Auto-Scaling launch configuration, if needed.
+
+```
+resource "aws_launch_configuration" "launch_configuration_name" {
+  name_prefix     = "name-"
+  image_id        = "ami_id"
+  instance_type   = "t2.micro"
+  security_groups = [aws_security_group.security_group_name.id]
+
+  key_name = "key_name"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+```
+
+### Create a Load Balences, if needed.
+
+```
+resource "aws_lb" "lb_name" {
+  name               = "lb_name"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.security_group_name.id]
+  subnets            = [aws_subnet.subnet_1_name.id, aws_subnet.subnet_2_name.id, aws_subnet.subnet_3_name.id]
+}
+```
+
+### Create a Load Balencer Target Group, if needed.
+
+```
+resource "aws_lb_target_group" "target_group_name" {
+   name     = "target_group_name"
+   port     = 80
+   protocol = "HTTP"
+   vpc_id   = aws_vpc.vpc_name.id
+}
+```
+
+### Create a Load Balencer Lisener
+
+```
+resource "aws_lb_listener" "listener_name" {
+  load_balancer_arn = aws_lb.lb_name.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.target_group_name.arn
+  }
+}
+```
+
+### Attach Target Group to Auto-Scaling Group.
+
+```
+resource "aws_autoscaling_attachment" "attachment_name" {
+  autoscaling_group_name = aws_autoscaling_group.autoscaling_group_name.id
+  alb_target_group_arn   = aws_lb_target_group.target_group_name.arn
+}
+```
+
+### Set min, max and desired capacity for the Auto-Scaling group.
+
+```
+resource "aws_autoscaling_group" "name" {
+  min_size             = 2
+  max_size             = 3
+  desired_capacity     = 2
+  launch_configuration = aws_launch_configuration.launch_configuration_name.name
+  vpc_zone_identifier  = [aws_subnet.subnet_1_name.id, aws_subnet.subnet_2_name.id, aws_subnet.subnet_3_name.id]
+}
+```
+
+### Set scaling rules.
+
+```
+resource "aws_autoscaling_policy" "scale_up" {
+  name                   = "scale_up"
+  autoscaling_group_name = aws_autoscaling_group.autoscaling_group_name.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1   #(-1 for scaling down)
+  cooldown               = 120
+}
+```
+
+### Set CloudWatch alarm for said scaling rules.
+
+```
+resource "aws_cloudwatch_metric_alarm" "scale_up" {
+  alarm_description   = "Monitors CPU utilization for Terramino ASG"
+  alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
+  alarm_name          = "scale_up"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  namespace           = "AWS/EC2"
+  metric_name         = "CPUUtilization"
+  threshold           = "25"
+  evaluation_periods  = "2"
+  period              = "60"
+  statistic           = "Average"
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.autoscaling_group_name.name
+  }
 }
 ```

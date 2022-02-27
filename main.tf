@@ -47,10 +47,10 @@ resource "aws_instance" "shadman_tf_app" {
 }
 
 
-resource "aws_key_pair" "deployer" {
-  key_name   = "aws_tf"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+C8B1ZgjSWqGtcaVwsa7Bo720MQR6XCCbMqCA9DMeJPbDz4eEqRRsdS3v8/CXlurWPZSjhe7nOigLzuq2xLqpApfTbZrCLbHmGw8I7iZnrpfho7i9KNOZG/qIKymLMC5Y+zLNDGzQBK8RYeeceE1uf0jN0YzDxoeWXYkyddlcEvvjI+oPTpmw2F/4RXwqIVr3BVu0igo7ZI99NggWzgVswH2ndog+iihXsLOMX2/5tWrVNU4GUlknmEAdehtOmKf5tN8w/SbHxAEbaEnayrqncbqNs6qmhr1sNafHBZVuVWfLaC8AUwLrlRSDhnT7G9M/2TFfFY9NZLaRf5Ig5OqH abc@0f0541c92239"
-}
+# resource "aws_key_pair" "deployer" {
+#   key_name   = "aws_tf"
+#   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+C8B1ZgjSWqGtcaVwsa7Bo720MQR6XCCbMqCA9DMeJPbDz4eEqRRsdS3v8/CXlurWPZSjhe7nOigLzuq2xLqpApfTbZrCLbHmGw8I7iZnrpfho7i9KNOZG/qIKymLMC5Y+zLNDGzQBK8RYeeceE1uf0jN0YzDxoeWXYkyddlcEvvjI+oPTpmw2F/4RXwqIVr3BVu0igo7ZI99NggWzgVswH2ndog+iihXsLOMX2/5tWrVNU4GUlknmEAdehtOmKf5tN8w/SbHxAEbaEnayrqncbqNs6qmhr1sNafHBZVuVWfLaC8AUwLrlRSDhnT7G9M/2TFfFY9NZLaRf5Ig5OqH abc@0f0541c92239"
+# }
 
 
 resource "aws_vpc" "shadman_tf_vpc" {
@@ -66,6 +66,8 @@ resource "aws_vpc" "shadman_tf_vpc" {
 resource "aws_subnet" "shadman_tf_subnet" {
   vpc_id     = aws_vpc.shadman_tf_vpc.id
   cidr_block = "10.0.1.0/24"
+#  map_public_ip_on_launch = "true"
+#  availability_zone = "eu-west-1a"
 
   tags = {
     Name = "eng103a_shadman_tf_subnet"
