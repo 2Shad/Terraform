@@ -194,7 +194,7 @@ resource "aws_route_table_association" "association_name" {
 }
 ```
 
-## Creating Auto-Scaling group with Terraform
+## Creating AWS Auto-Scaling group with Terraform
 
 Create at least 2 subnets in different avaliability zones using: 
 ```
